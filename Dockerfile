@@ -37,7 +37,8 @@ COPY Audio/Flight.mp3 music/
 RUN ["cp", "music/Flight.mp3", "audio/complex.mp3"]
 RUN ["cp", "music/Flight.mp3", "audio/hfc.mp3"]
 
-COPY detect_onsets.py .
+COPY music_data.py .
+COPY MusicDataManger.py .
 
-RUN ["python3", "detect_onsets.py"]
+RUN ["python3", "MusicDataManger.py"]
 
