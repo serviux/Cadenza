@@ -1,4 +1,6 @@
 from essentia.standard import *
+from pylab import plot, show, figure, imshow
+import matplotlib.pyplot as plt
 
 
 class MusicData:
@@ -25,6 +27,33 @@ class MusicData:
         self.beats = beats
         self.beat_confidence = beats_confidence
         self.beat_intervals = beats_intervals
+
+    def save_beat_diagram(self):
+        """Saves the diagram of detected beats in a song"""
+        plot(self.audio)
+        for beat in beats:
+            plt.axvline(x=beat*44100, color='red')
+
+        plt.title("Audio waveform and the estimated beat positions")
+        plt.savefig("audio_data/beats.png")
+
+
+    def save_onsets_diagram(self):
+        """Saves a diagram of the detected onsets from hfc and complex"""
+        
+        plot(self.audio)
+        for onset in self.onsets_hfc:
+            plt.axvline(x=onset*44100, color='red')
+
+        plt.title("Audio waveform and the estimated onset positions (HFC onset detection function)")
+        plt.savefig("audio_data/hfc.png")
+
+        plot(self.audio)
+        for onset in self.onsets_complex:
+            plt.axvline(x=onset*44100, color='red')
+
+        plt.title("Audio waveform and the estimated onset positions (Complex onset detection function)")
+        plt.savefig("audio_data/complex.png")
 
 
     def detect_onsets(self):
@@ -58,10 +87,10 @@ class MusicData:
         self.onsets_hfc = onsets_hfc
         self.onsets_complex = onsets_complex
         beeps_hfc = AudioOnsetsMarker(onsets=onsets_hfc, type='beep')(silence)
-        AudioWriter(filename='audio/hfc.mp3', format='mp3')(StereoMuxer()(audio, beeps_hfc))
+        AudioWriter(filename='audio_data/hfc.mp3', format='mp3')(StereoMuxer()(audio, beeps_hfc))
 
         beeps_complex = AudioOnsetsMarker(onsets=onsets_complex, type='beep')(silence)
-        AudioWriter(filename='audio/complex.mp3', format='mp3')(StereoMuxer()(audio, beeps_complex))
+        AudioWriter(filename='audio_data/complex.mp3', format='mp3')(StereoMuxer()(audio, beeps_complex))
 
 
     def json(self):

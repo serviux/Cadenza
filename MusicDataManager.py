@@ -2,6 +2,7 @@
 import boto3
 import argparse
 import os, os.path
+from shutil import copyfile
 from music_data_handler import MusicData
 
 s3 = boto3.resource("s3")
@@ -49,13 +50,27 @@ def create_connect_table():
         table.meta.client.get_waiter('table_exists').wait(TableName='music_data')
         return table
 
+def copy_to_audio_folder(file_path):
+    """Copies the song to the audio/ subdirectory
+    
+    Parameters
+    ----------
+    file_path: String
+        file to be copied to audio/complex.mp3 and audio/hfc.mp3"""
+    if not os.path.exists("audio_data"):
+        os.mkdir("audio_data")
+    copyfile(file_path, "audio_data/complex.mp3")
+    copyfile(file_path, "audio_data/hfc.mp3")
+    
+
 
 def upload_files_s3(filepath):
     filename = os.path.split(filepath)[-1:][0].replace(" ", "_")
     name_no_ext, _ = os.path.splitext(filename)
     bucket.upload_file(filepath, f"{name_no_ext}/{filename}")
-    bucket.upload_file("audio/complex.png", f"{name_no_ext}/{}")
-    bucket.upload_file("audio/hfc.png", f"{name_no_ext}")
+    bucket.upload_file("audio_data/complex.png", f"{name_no_ext}/diagrams/complex.png")
+    bucket.upload_file("audio_data/hfc.png", f"{name_no_ext}/diagrams/hfc.png")
+    bucket.upload_file("audio_data/beats.png", f"{name_no_ext}/diagrams/beats.png")
 
 
 def main():
@@ -73,10 +88,15 @@ def main():
     if args.title is None:
         print("no title provided")
 
+    copy_to_audio_folder(args.file_path)
     md = MusicData(args.file_path, title=args.title, artist=args.title)
     md.detect_beats()
     md.detect_onsets()
     md_data = md.json()
+    md.save_beat_diagram()
+    md.save_onsets_diagram()
+    upload_files_s3(args.file_path)
+
 
 
 
