@@ -1,10 +1,13 @@
 FROM ubuntu:18.04
 
+ARG $FILE_PATH
+ARG $AWS_ACCESS_KEY_ID
+ARG $AWS_SECRET_ACCESS_KEY
 ENV LANG C.UTF-8
 
 RUN apt-get update \
     && apt-get -y upgrade \
-    && apt-get install -y python3-numpy python3-six \
+    && apt-get install -y python3-numpy python3-six curl unzip\
        libfftw3-3 libyaml-0-2 libtag1v5 libsamplerate0 python3-yaml \
        libavcodec57 libavformat57 libavutil55 libavresample3 \
     && rm -rf /var/lib/apt/lists/*
@@ -27,15 +30,25 @@ RUN apt-get update \
 
 ENV PYTHONPATH /usr/local/lib/python3/dist-packages
 
+
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+RUN unzip awscliv2.zip
+RUN ./aws/install
+RUN aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+RUN aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+
+
+
+
 WORKDIR /essentia
 
 RUN ["mkdir", "music"]
 RUN ["mkdir", "audio"]
 
-COPY Audio/Flight.mp3 music/
+COPY $FILE_PATH music/
 
-RUN ["cp", "music/Flight.mp3", "audio/complex.mp3"]
-RUN ["cp", "music/Flight.mp3", "audio/hfc.mp3"]
+RUN ["cp", $FILE_PATH, "audio/complex.mp3"]
+RUN ["cp", $FILE_PATH, "audio/hfc.mp3"]
 
 COPY music_data.py .
 COPY MusicDataManger.py .
