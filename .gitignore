@@ -4,3 +4,6 @@
 Audio/
 venv/
 JSON/
+*.mp3
+*.flac
+*.wav
