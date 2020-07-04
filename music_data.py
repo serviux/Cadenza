@@ -1,7 +1,10 @@
 from essentia.standard import *
 from pylab import plot, show, figure, imshow
+from decimal import Decimal
 import matplotlib.pyplot as plt
-
+import os.path
+import json
+import pandas as pd
 
 class MusicData:
     """Finds the onsets and beats for a given song"""
@@ -16,7 +19,8 @@ class MusicData:
         self.onsets_complex = []
         self.onsets_hfc = []
         self.file_path = file_path
-        self.audio = MonoLoader(filename=self.file_path)
+        self.format = os.path.splitext(self.file_path)[1][1:]
+        self.audio = MonoLoader(filename=self.file_path)()
 
 
     def detect_beats(self):
@@ -28,10 +32,11 @@ class MusicData:
         self.beat_confidence = beats_confidence
         self.beat_intervals = beats_intervals
 
+
     def save_beat_diagram(self):
         """Saves the diagram of detected beats in a song"""
         plot(self.audio)
-        for beat in beats:
+        for beat in self.beats:
             plt.axvline(x=beat*44100, color='red')
 
         plt.title("Audio waveform and the estimated beat positions")
@@ -68,7 +73,7 @@ class MusicData:
         pool = essentia.Pool()
 
         # Computing onset detection functions.
-        for frame in FrameGenerator(audio, frameSize=1024, hopSize=512):
+        for frame in FrameGenerator(self.audio, frameSize=1024, hopSize=512):
             mag, phase, = c2p(fft(w(frame)))
             pool.add('features.hfc', od1(mag, phase))
             pool.add('features.complex', od2(mag, phase))
@@ -83,25 +88,31 @@ class MusicData:
             # function, it doesn't actually matter which weight you give it
             [1])
         onsets_complex = onsets(essentia.array([pool['features.complex']]), [1])
-
+        
+        silence = [0.] * len(self.audio)
         self.onsets_hfc = onsets_hfc
         self.onsets_complex = onsets_complex
         beeps_hfc = AudioOnsetsMarker(onsets=onsets_hfc, type='beep')(silence)
-        AudioWriter(filename='audio_data/hfc.mp3', format='mp3')(StereoMuxer()(audio, beeps_hfc))
+        AudioWriter(filename=f'audio_data/hfc.{self.format}',
+                    format=self.format)(StereoMuxer()(self.audio, beeps_hfc))
 
-        beeps_complex = AudioOnsetsMarker(onsets=onsets_complex, type='beep')(silence)
-        AudioWriter(filename='audio_data/complex.mp3', format='mp3')(StereoMuxer()(audio, beeps_complex))
+        beeps_complex = AudioOnsetsMarker(onsets=onsets_complex,
+                                          type='beep')(silence)
+        AudioWriter(filename=f'audio_data/complex.{self.format}', 
+                    format=self.format)(StereoMuxer()(self.audio, beeps_complex))
 
 
-    def json(self):
-        """Returns a json object of all the in the class"""
-        return {
+    def to_dict(self):
+        """Returns a dict object of all info the in the class"""
+
+        # this whole function is dumb
+        return{
                 "title": self.Title,
                 "artist": self.Artist,
-                "bpm": self.BPM,
-                "confidence": self.beat_confidence,
-                "beats": self.beats,
-                "beat_intervals": self.beat_intervals,
-                "onsets_complex": self.onsets_complex,
-                "onsets_hfc": self.onsets_hfc
+                "bpm": Decimal(float(self.BPM)),
+                "confidence": Decimal(float(self.beat_confidence)),
+                "beats": [Decimal(float(b)) for b in self.beats],
+                "beat_intervals": [Decimal(float(bi)) for bi in self.beat_intervals],
+                "onsets_complex": [Decimal(float(o)) for o in self.onsets_complex],
+                "onsets_hfc": [Decimal(float(o)) for o in self.onsets_hfc]
         }
