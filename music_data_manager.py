@@ -92,7 +92,7 @@ def main():
         print("no title provided")
         return
 
-    md = MusicData(args.file_path, title=args.title, artist=args.title)
+    md = MusicData(args.file_path, title=args.title, artist=args.artist)
     md.detect_beats()
     md.detect_onsets()
     md.save_beat_diagram()
