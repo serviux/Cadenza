@@ -50,9 +50,10 @@ COPY ${FILE_PATH} music/
 
 # TODO: make setup.py script, which copies to the audio folder
 COPY setup.py .
+COPY db_util.py .
 COPY music_data.py .
 COPY music_data_manager.py .
 RUN ["python3", "setup.py"]
 
-RUN ["python3", "music_data_manager.py", "-f", "music/Metalmancy.mp3", "-t", "Metalmancy", "-a", "Danny Baranowsky"]
+RUN ["python3", "music_data_manager.py", "-f", "music/Portabellohead.mp3", "-t", "Portablellohead.mp3", "-a", "Danny Baranowsky"]
 
