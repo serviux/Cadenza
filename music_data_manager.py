@@ -4,7 +4,7 @@ import argparse
 import os, os.path
 from shutil import copyfile
 from music_data import MusicData
-import botocore.errorfactory
+from db_util import create_connect_table
 
 s3 = boto3.resource("s3")
 dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
@@ -12,44 +12,6 @@ bucket = s3.Bucket("joshcormiercadenza")
 
 
 
-def create_connect_table():
-    """tries to connect to the table or create the table"""
-    table = None
-    try:
-        table = dynamodb.Table("music_data")
-        table.item_count
-        return table
-    except botocore.errorfactory.ResourceInUseException as ex:
-        table = dynamodb.create_table(
-            TableName='music_data',
-            KeySchema=[
-                {
-                    'AttributeName': "title",
-                    'KeyType': 'HASH'
-                },
-                {
-                    'AttributeName': "artist",
-                    'KeyType': 'RANGE'
-                }
-            ],
-            AttributeDefinitions=[
-                {
-                    'AttributeName': 'title',
-                    'AttributeType': 'S',
-                },
-                {
-                    'AttributeName': 'artist',
-                    'AttributeType': 'S',
-                },
-            ],
-            ProvisionedThroughput={
-                'ReadCapacityUnits': 5,
-                'WriteCapacityUnits': 5
-            }
-
-        )
-        table.meta.client.get_waiter('table_exists').wait(TableName='music_data')
-        return table
 
 
 def upload_files_s3(filepath):
@@ -104,5 +66,4 @@ def main():
 
 
 if __name__ == '__main__':
-    print("Executing")
     main()
