@@ -104,15 +104,4 @@ class MusicData:
 
     def to_dict(self):
         """Returns a dict object of all info the in the class"""
-
-        # this whole function is dumb
-        return{
-                "title": self.Title,
-                "artist": self.Artist,
-                "bpm": Decimal(float(self.BPM)),
-                "confidence": Decimal(float(self.beat_confidence)),
-                "beats": [Decimal(float(b)) for b in self.beats],
-                "beat_intervals": [Decimal(float(bi)) for bi in self.beat_intervals],
-                "onsets_complex": [Decimal(float(o)) for o in self.onsets_complex],
-                "onsets_hfc": [Decimal(float(o)) for o in self.onsets_hfc]
-        }
+        return self.__class__.__dict__

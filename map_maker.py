@@ -1,53 +1,24 @@
 """This tools pulls the data analyzed from the music_data_manager and creates
 an beatmap for the given song"""
 
-import boto3
+
 import pandas as pd
-from botocore.exceptions import ClientError
 from statistics import median
-from db_util import create_connect_table
 from random import randint
 from decimal import Decimal
 
 
-dynamodb = boto3.client("dynamodb")
+
 
 class MapMaker:
 
     def __init__(self):
-        self.beats = None
-        self.hfc = None
-        self.complex = None
-        self.bpm = None
+        self.beats = []
+        self.hfc = []
+        self.complex = []
+        self.bpm = 0
         self.measures = []
         self.total_onsets = []
-
-
-    def retrieve_song_info(self, title, artist):
-        """Retrieves the metadata for a given song and attaches it to
-        the instance of the class which called it
-        Parameters
-        ----------
-            title: string
-                title of the song to search by
-            artist: string
-                name of the artist to search by"""
-        table = create_connect_table()
-        resp = None
-        try:
-            resp = table.get_item(Key={"title": title, "artist": artist})
-            resp = resp["Item"]
-        except ClientError as e:
-            print(e.response["Error"]["Message"])
-
-        self.beats = resp["beats"]
-        self.complex = pd.DataFrame(resp["onsets_complex"])
-        self.complex.columns = ["onsets_complex"]
-        self.complex["float_onsets"] = self.complex["onsets_complex"].apply(lambda x: float(x))
-        self.hfc = pd.DataFrame(resp["onsets_hfc"])
-        self.hfc.columns = ["onsets_hfc"]
-        self.hfc["float_onsets"] = self.hfc["onsets_hfc"].apply(lambda x: float(x))
-        self.bpm = resp["bpm"]
 
 
     def do_work(self):
@@ -221,27 +192,11 @@ class MapMaker:
 
         return combined_measure
 
-
-    def upload_to_dynamodb(self, title, artist):
-        table = create_connect_table()
-        #TODO: find where strings are getting in the measures lol
-        #temporary work around, ignore strings in the list
-        beatmap = [Decimal(b) for b in self.total_onsets if not type(b) == str]
-        resp = table.update_item(Key={
-            "title": title,
-            "artist": artist
-        }, UpdateExpression="set mapped_beats = :beats",
-        ExpressionAttributeValues={":beats": beatmap})
-
-
-
 def main():
     title = "Konga Conga Kappa"
     artist = "Danny Baranowsky"
     mm = MapMaker()
-    mm.retrieve_song_info(title, artist)
     mm.do_work()
-    mm.upload_to_dynamodb(title, artist)
 
         
 if __name__ == "__main__":

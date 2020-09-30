@@ -30,12 +30,6 @@ RUN apt-get update \
 
 ENV PYTHONPATH /usr/local/lib/python3/dist-packages
 
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-RUN unzip awscliv2.zip
-RUN ./aws/install
-RUN aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}
-RUN aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}
-RUN python3 -m pip install boto3 
 RUN python3 -m pip install -U matplotlib
 RUN python3 -m pip install pandas
 # RUN pip freeze
@@ -43,17 +37,21 @@ RUN python3 -m pip install pandas
 
 WORKDIR /essentia
 
-RUN ["mkdir", "music"]
-RUN ["mkdir", "audio_data"]
 
-COPY ${FILE_PATH} music/
+
+COPY requirements.txt .
+
+RUN pip3 install -r requirements.txt
 
 # TODO: make setup.py script, which copies to the audio folder
-COPY setup.py .
-COPY db_util.py .
+COPY app.py .
 COPY music_data.py .
-COPY music_data_manager.py .
-RUN ["python3", "setup.py"]
+COPY map_maker.py .
+EXPOSE 5000
+RUN export FLASK_APP=app.py
 
-RUN ["python3", "music_data_manager.py", "-f", "music/Portabellohead.mp3", "-t", "Portablellohead.mp3", "-a", "Danny Baranowsky"]
+
+
+
+
 
