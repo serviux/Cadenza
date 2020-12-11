@@ -47,11 +47,7 @@ RUN pip3 install -r requirements.txt
 COPY app.py .
 COPY music_data.py .
 COPY map_maker.py .
-EXPOSE 5000
 RUN export FLASK_APP=app.py
-
-
-
-
-
+CMD ["python3", "-m", "flask", "run"]
+EXPOSE 5000
 
